@@ -31,10 +31,12 @@ type Server struct {
 }
 
 func (s *Server) ListPackages(ctx context.Context, request *packageops_grpc.PackageListRequest) (*packageops_grpc.PackageList, error) {
-	packages, err := ioutil.ReadDir("/packages/")
+	packages, err := ioutil.ReadDir("packages/")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Printf("List Packages Request Received...\n")
 
 	var contents string
 	for _, packagefile := range packages {
@@ -330,6 +332,7 @@ func main() {
 
 	server := grpc.NewServer()
 	protobuf_grpc.RegisterFileServiceServer(server, &Server{})
+	packageops_grpc.RegisterPackageOperationServicesServer(server, &Server{})
 	log.Printf("Server listening at address %v", listener.Addr())
 
 	if err := server.Serve(listener); err != nil {
