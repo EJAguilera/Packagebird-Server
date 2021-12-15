@@ -2,15 +2,18 @@ package main
 
 import (
 	protobuf_grpc "Server/FileTransfer"
+	packageops_grpc "Server/PackageOperations"
 	"context"
 	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"google.golang.org/grpc"
@@ -24,6 +27,83 @@ const (
 
 type Server struct {
 	protobuf_grpc.UnimplementedFileServiceServer
+	packageops_grpc.UnimplementedPackageOperationServicesServer
+}
+
+func (s *Server) ListPackages(ctx context.Context, request *packageops_grpc.PackageListRequest) (*packageops_grpc.PackageList, error) {
+	packages, err := ioutil.ReadDir("/packages/")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var contents string
+	for _, packagefile := range packages {
+		contents += fmt.Sprintf("%v\n", packagefile.Name())
+	}
+
+	packagelist := &packageops_grpc.PackageList{
+		List: contents,
+	}
+
+	return packagelist, nil
+}
+
+func (s *Server) TestPackage(ctx context.Context, request *packageops_grpc.PackageTestRequest) (*packageops_grpc.PackageTestResponse, error) {
+	packagename := fmt.Sprintf("packages/%v.tar.gz", request.GetPackagename())
+	if _, err := os.Stat(packagename); err == nil {
+		server_message := fmt.Sprintf("Package %v running test...", request.GetPackagename())
+		fmt.Println(server_message)
+		time.Sleep(2 * time.Second)
+		server_message = fmt.Sprintf("Package %v passed test...", request.GetPackagename())
+		response := &packageops_grpc.PackageTestResponse{
+			Response: server_message,
+		}
+		return response, nil
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		message := fmt.Sprintf("Package %v not found!", request.GetPackagename())
+		response := &packageops_grpc.PackageTestResponse{
+			Response: message,
+		}
+		return response, nil
+	} else {
+		message := "Unknown Error Encountered!"
+		response := &packageops_grpc.PackageTestResponse{
+			Response: message,
+		}
+		return response, nil
+	}
+}
+
+func (s *Server) BuildPackage(ctx context.Context, request *packageops_grpc.PackageBuildRequest) (*packageops_grpc.PackageBuildResponse, error) {
+	packagename := fmt.Sprintf("packages/%v.tar.gz", request.GetPackagename())
+	if _, err := os.Stat(packagename); err == nil {
+		server_message := fmt.Sprintf("Package %v being built...", request.GetPackagename())
+		fmt.Println(server_message)
+		time.Sleep(2 * time.Second)
+		server_message = fmt.Sprintf("Package %v built...", request.GetPackagename())
+		response := &packageops_grpc.PackageBuildResponse{
+			Response: server_message,
+		}
+		return response, nil
+
+	} else if errors.Is(err, os.ErrNotExist) {
+		message := fmt.Sprintf("Package %v not found!", request.GetPackagename())
+		response := &packageops_grpc.PackageBuildResponse{
+			Response: message,
+		}
+		return response, nil
+	} else {
+		message := "Unknown Error Encountered!"
+		response := &packageops_grpc.PackageBuildResponse{
+			Response: message,
+		}
+		return response, nil
+	}
+}
+
+func FindPackage(packagename string) bool {
+	return true
 }
 
 // RPC for downloading files from server to client
