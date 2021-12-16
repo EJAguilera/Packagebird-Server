@@ -110,6 +110,8 @@ func FindPackage(packagename string) bool {
 
 // RPC for downloading files from server to client
 func (s *Server) Download(request *protobuf_grpc.Request, fileStream protobuf_grpc.FileService_DownloadServer) error {
+	fmt.Printf("Recieved request for downloading package %v", request.GetBody())
+
 	package_path := fmt.Sprintf("packages/%v", request.GetBody())
 
 	file, err := os.Open(package_path)
@@ -145,12 +147,14 @@ func (s *Server) Download(request *protobuf_grpc.Request, fileStream protobuf_gr
 		}
 	}
 
+	fmt.Println("Successfully completed download operation.")
 	return nil
 }
 
 // RPC for uploading files from client to server
 func (s *Server) Upload(fileStream protobuf_grpc.FileService_UploadServer) error {
 
+	fmt.Println("Received request to upload file.")
 	file, err := os.Create("tmp/temp.bin")
 	if err != nil {
 		log.Fatal(err)
@@ -187,7 +191,7 @@ func (s *Server) Upload(fileStream protobuf_grpc.FileService_UploadServer) error
 	}
 
 	fileStream.SendAndClose(message)
-
+	fmt.Println("File upload operation completed successfully.")
 	return nil
 }
 
