@@ -57,6 +57,7 @@ func (s *Server) TestPackage(ctx context.Context, request *packageops_grpc.Packa
 		fmt.Println(server_message)
 		time.Sleep(2 * time.Second)
 		server_message = fmt.Sprintf("Package %v passed test...", request.GetPackagename())
+		fmt.Println(server_message)
 		response := &packageops_grpc.PackageTestResponse{
 			Response: server_message,
 		}
@@ -67,6 +68,7 @@ func (s *Server) TestPackage(ctx context.Context, request *packageops_grpc.Packa
 		response := &packageops_grpc.PackageTestResponse{
 			Response: message,
 		}
+		fmt.Println(message)
 		return response, nil
 	} else {
 		message := "Unknown Error Encountered!"
@@ -87,16 +89,19 @@ func (s *Server) BuildPackage(ctx context.Context, request *packageops_grpc.Pack
 		response := &packageops_grpc.PackageBuildResponse{
 			Response: server_message,
 		}
+		fmt.Println(server_message)
 		return response, nil
 
 	} else if errors.Is(err, os.ErrNotExist) {
 		message := fmt.Sprintf("Package %v not found!", request.GetPackagename())
+		fmt.Println(message)
 		response := &packageops_grpc.PackageBuildResponse{
 			Response: message,
 		}
 		return response, nil
 	} else {
 		message := "Unknown Error Encountered!"
+		fmt.Println(message)
 		response := &packageops_grpc.PackageBuildResponse{
 			Response: message,
 		}
