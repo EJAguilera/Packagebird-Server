@@ -160,6 +160,14 @@ func (s *Server) Download(request *protobuf_grpc.Request, fileStream protobuf_gr
 func (s *Server) Upload(fileStream protobuf_grpc.FileService_UploadServer) error {
 
 	fmt.Println("Received request to upload file.")
+
+	// Checks if temp directory exist...
+	_, err := os.Stat("tmp")
+	if os.IsNotExist(err) {
+		log.Printf("Temp directory not found. Creating new temp directory.")
+		os.Mkdir("tmp", 0755)
+	}
+
 	file, err := os.Create("tmp/temp.bin")
 	if err != nil {
 		log.Fatal(err)
@@ -203,9 +211,16 @@ func (s *Server) Upload(fileStream protobuf_grpc.FileService_UploadServer) error
 // Names file uploaded in a sequential request
 func (s *Server) NameFile(context context.Context, request *protobuf_grpc.Request) (*protobuf_grpc.Response, error) {
 	oldFileName := "tmp/temp.bin"
+
+	_, err := os.Stat("packages")
+	if os.IsNotExist(err) {
+		os.Mkdir("packages", 0755)
+		log.Printf("Package directory not found. Creating new package directory...")
+	}
+
 	newFileName := fmt.Sprintf("packages/%v", request.GetBody())
 
-	err := os.Rename(oldFileName, newFileName)
+	err = os.Rename(oldFileName, newFileName)
 	if err != nil {
 		log.Fatal(err)
 
